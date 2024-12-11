@@ -21,6 +21,7 @@ pub mod video_decoder;
 use alvr_common::{
     dbg_client_core, error,
     glam::{Quat, UVec2, Vec2, Vec3},
+    info,
     parking_lot::{Mutex, RwLock},
     warn, ConnectionState, DeviceMotion, LifecycleState, Pose, HAND_LEFT_ID, HAND_RIGHT_ID,
     HEAD_ID,
@@ -243,7 +244,21 @@ impl ClientCoreContext {
 
         for (id, motion) in &mut device_motions {
             if *id == *HEAD_ID {
+                info!(
+                    "Pose Tracked;{};{};{};{}",
+                    poll_timestamp.as_micros(),
+                    motion.pose.position.x,
+                    motion.pose.position.y,
+                    motion.pose.position.z
+                );
                 *motion = predict_motion(target_timestamp, poll_timestamp, *motion);
+                info!(
+                    "Pose LocalPrediction;{};{};{};{}",
+                    poll_timestamp.as_micros(),
+                    motion.pose.position.x,
+                    motion.pose.position.y,
+                    motion.pose.position.z
+                );
 
                 let mut head_pose_queue = self.connection_context.head_pose_queue.write();
 
@@ -349,6 +364,13 @@ impl ClientCoreContext {
                 break;
             }
         }
+        info!(
+            "Pose Latched;{};{};{};{}",
+            timestamp.as_micros(),
+            head_pose.position.x,
+            head_pose.position.y,
+            head_pose.position.z
+        );
         let view_params = self.connection_context.view_params.read();
         let view_params = [
             ViewParams {
